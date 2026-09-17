@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Modern responsive weekly university timetable with calendar (ICS) subscription endpoint",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
