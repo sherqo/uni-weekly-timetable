@@ -52,6 +52,16 @@ export const EVENTS: TimetableEvent[] = [
     room: "Cisco Lab",
   },
   {
+    id: "sat-cse421-tut",
+    day: "Saturday",
+    start: "16:30",
+    end: "18:30",
+    code: "CSE421",
+    title: "High-Performance Computing",
+    type: "Tutorial",
+    room: "922",
+  },
+  {
     id: "sat-cse336-lec",
     day: "Saturday",
     start: "18:30",

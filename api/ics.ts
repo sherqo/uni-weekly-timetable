@@ -21,6 +21,7 @@ interface TimetableEvent {
 const EVENTS: TimetableEvent[] = [
   { id: "sat-cse383-lec", day: "Saturday", start: "10:00", end: "12:00", code: "CSE383", title: "Computer Graphics", type: "Lecture", room: "9xx" },
   { id: "sat-cse383-lab", day: "Saturday", start: "12:00", end: "14:00", code: "CSE383", title: "Computer Graphics", type: "Lab", room: "Cisco Lab" },
+  { id: "sat-cse421-tut", day: "Saturday", start: "16:30", end: "18:30", code: "CSE421", title: "High-Performance Computing", type: "Tutorial", room: "922" },
   { id: "sat-cse336-lec", day: "Saturday", start: "18:30", end: "20:30", code: "CSE336", title: "Software Design Patterns", type: "Lecture", room: "9xx" },
   { id: "sun-cse461-lec", day: "Sunday", start: "08:00", end: "10:00", code: "CSE461", title: "Cryptography and Security", type: "Lecture", room: "9xxA" },
   { id: "mon-cse421-lec", day: "Monday", start: "10:00", end: "12:00", code: "CSE421", title: "High-Performance Computing", type: "Lecture", room: "9xxA" },
