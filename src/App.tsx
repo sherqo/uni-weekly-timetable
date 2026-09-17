@@ -606,7 +606,7 @@ export default function App() {
             </h2>
             <p className="mt-1 text-sm text-indigo-100">
               One subscription URL powers Google, Apple & Outlook. Events repeat weekly until Jan
-              15. Subscribe once — timetable updates flow automatically.
+              15, each with a 15-minute reminder built in.
             </p>
             <div className="mt-3 flex items-center gap-2 rounded-xl bg-black/25 p-2 pl-3 font-mono text-xs">
               <span className="truncate">{icsUrl}</span>

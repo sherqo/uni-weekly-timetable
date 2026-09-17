@@ -81,6 +81,11 @@ export function buildICS(): string {
       `LOCATION:${escapeICS(location)}`,
       "STATUS:CONFIRMED",
       "TRANSP:OPAQUE",
+      "BEGIN:VALARM",
+      "TRIGGER:-PT15M",
+      "ACTION:DISPLAY",
+      `DESCRIPTION:${escapeICS(`Reminder: ${ev.code} ${ev.type} starts in 15 minutes`)}`,
+      "END:VALARM",
       "END:VEVENT"
     );
   }

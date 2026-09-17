@@ -33,4 +33,6 @@ https://<your-domain>/api/ics
 - Outlook → Add calendar → Subscribe from web → paste URL
 
 `GET /api/ics?download=1` forces a file download (`timetable.ics`).
-Events repeat weekly (`RRULE:FREQ=WEEKLY;UNTIL=20260115`) in `Africa/Cairo`.
+Events repeat weekly (`RRULE:FREQ=WEEKLY;UNTIL=20260115`) in `Africa/Cairo`,
+each with a `VALARM` reminder 15 minutes before start
+(customize with `?reminder=30`, range 1–120 minutes).

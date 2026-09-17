@@ -1,6 +1,8 @@
 // Vercel Serverless Function — ICS calendar feed
 // GET /api/ics  -> text/calendar (subscribe this URL in Google/Apple/Outlook)
 // GET /api/ics?download=1 -> forces file download
+// GET /api/ics?reminder=30 -> reminder N minutes before (default 15, range 1–120)
+// Every event carries a VALARM so calendar apps notify before class.
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
@@ -43,7 +45,7 @@ function esc(s: string): string {
   return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 }
 
-function buildICS(): string {
+function buildICS(minutes: number): string {
   // Reference Saturday 2026-09-19
   const refY = 2026, refM = 9, refD = 19;
   const refDate = new Date(Date.UTC(refY, refM - 1, refD));
@@ -76,6 +78,11 @@ function buildICS(): string {
       `LOCATION:${esc(ev.room)}`,
       "STATUS:CONFIRMED",
       "TRANSP:OPAQUE",
+      "BEGIN:VALARM",
+      `TRIGGER:-PT${minutes}M`,
+      "ACTION:DISPLAY",
+      `DESCRIPTION:${esc(`Reminder: ${ev.code} ${ev.type} starts in ${minutes} minutes`)}`,
+      "END:VALARM",
       "END:VEVENT"
     );
   }
@@ -84,7 +91,12 @@ function buildICS(): string {
 }
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
-  const ics = buildICS();
+  // Reminder lead time in minutes, default 15. Override with ?reminder=30 (1–120).
+  const raw = req.query.reminder ?? req.query.alarm;
+  let minutes = parseInt(Array.isArray(raw) ? raw[0] : String(raw ?? "15"), 10);
+  if (!Number.isFinite(minutes)) minutes = 15;
+  minutes = Math.min(120, Math.max(1, minutes));
+  const ics = buildICS(minutes);
   const download = req.query.download !== undefined;
   res.setHeader("Content-Type", "text/calendar; charset=utf-8");
   res.setHeader("Access-Control-Allow-Origin", "*");
