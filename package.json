@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Modern responsive weekly university timetable with calendar (ICS) subscription endpoint",
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "vite",
@@ -21,8 +21,8 @@
     "@tailwindcss/vite": "^4.1.12",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@vercel/node": "^13.0.1",
     "@vitejs/plugin-react": "^4.6.0",
-    "@vercel/node": "^3.2.5",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.9.2",
     "vite": "^6.3.5"
