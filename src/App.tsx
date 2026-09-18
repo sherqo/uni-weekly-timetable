@@ -101,6 +101,14 @@ function EventCard({ ev }: { ev: TimetableEvent }) {
     <div className={`flex gap-2.5 rounded-xl border p-3 ${c.soft}`}>
       <div className={`w-1 shrink-0 rounded-full ${c.bar}`} />
       <div className="min-w-0 flex-1">
+        <div
+          className={`mb-2 flex items-center justify-center gap-1.5 rounded-lg border py-1.5 text-sm font-bold tabular-nums ${c.badge}`}
+        >
+          <Clock size={14} className="shrink-0" />
+          {formatTime12h(ev.start)}
+          <span aria-hidden="true">→</span>
+          {formatTime12h(ev.end)}
+        </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-bold">{ev.code}</span>
           <span className={`rounded border px-1.5 py-px text-[10px] font-semibold ${c.badge}`}>
@@ -112,9 +120,6 @@ function EventCard({ ev }: { ev: TimetableEvent }) {
           <span className="truncate">{ev.title}</span>
         </div>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          <span className="flex items-center gap-1 tabular-nums">
-            <Clock size={12} /> {formatTime12h(ev.start)} – {formatTime12h(ev.end)}
-          </span>
           <span className="flex items-center gap-1">
             <MapPin size={12} /> {ev.room}
           </span>
