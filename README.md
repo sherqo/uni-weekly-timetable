@@ -1,10 +1,10 @@
 # Weekly Timetable
 
-Modern, responsive, dark-mode friendly university weekly timetable.
+Simple, mobile-friendly university weekly timetable.
 
-- **Weekly Calendar View** (Sat–Fri, 8 AM – 9 PM grid) + **Daily List View**
-- Color-coded courses, hover detail cards, course filters, search
-- Dark-mode toggle, fully responsive
+- **Week board** (day columns, stacked on phones) + **Daily agenda**
+- Color-coded courses, break lengths between classes, filters, search
+- Dark-mode toggle, phones open on the daily agenda by default
 - **ICS calendar feed**: `GET /api/ics` — subscribe in Google / Apple / Outlook
 - **JSON feed**: `GET /api/schedule`
 
