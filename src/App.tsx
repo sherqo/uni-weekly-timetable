@@ -4,7 +4,6 @@ import {
   CalendarDays,
   CalendarPlus,
   Check,
-  Clock,
   Coffee,
   Copy,
   Download,
@@ -23,7 +22,6 @@ import {
   DAY_ORDER,
   EVENTS,
   durationHours,
-  formatTime12h,
   type DayName,
   type TimetableEvent,
 } from "./data/schedule";
@@ -42,6 +40,15 @@ function formatGap(mins: number): string {
   if (h === 0) return `${m}m break`;
   if (m === 0) return `${h}h break`;
   return `${h}h ${m}m break`;
+}
+
+function formatDuration(start: string, end: string): string {
+  const mins = toMinutes(end) - toMinutes(start);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
 }
 
 function typeIcon(type: TimetableEvent["type"]) {
@@ -98,17 +105,22 @@ function EventCard({ ev }: { ev: TimetableEvent }) {
   const c = COURSE_COLORS[ev.code] ?? COURSE_COLORS.CSE383;
   const Icon = typeIcon(ev.type);
   return (
-    <div className={`flex gap-2.5 rounded-xl border p-3 ${c.soft}`}>
-      <div className={`w-1 shrink-0 rounded-full ${c.bar}`} />
-      <div className="min-w-0 flex-1">
-        <div
-          className={`mb-2 flex items-center justify-center gap-1.5 rounded-lg border py-1.5 text-sm font-bold tabular-nums ${c.badge}`}
-        >
-          <Clock size={14} className="shrink-0" />
-          {formatTime12h(ev.start)}
-          <span aria-hidden="true">→</span>
-          {formatTime12h(ev.end)}
-        </div>
+    <div className="flex gap-2.5">
+      {/* time rail — 24h, start bold / end muted */}
+      <div className="flex w-[52px] shrink-0 flex-col items-end leading-tight">
+        <span className="text-[15px] font-bold tabular-nums">{ev.start}</span>
+        <span className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500">{ev.end}</span>
+        <span className="mt-0.5 text-[10px] tabular-nums text-zinc-400 dark:text-zinc-500">
+          {formatDuration(ev.start, ev.end)}
+        </span>
+      </div>
+      {/* timeline */}
+      <div className="flex flex-col items-center py-1">
+        <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} />
+        <span className="w-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+      </div>
+      {/* details */}
+      <div className={`min-w-0 flex-1 rounded-xl border p-2.5 ${c.soft}`}>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-bold">{ev.code}</span>
           <span className={`rounded border px-1.5 py-px text-[10px] font-semibold ${c.badge}`}>
@@ -119,20 +131,16 @@ function EventCard({ ev }: { ev: TimetableEvent }) {
           <Icon size={13} className={`shrink-0 ${c.text}`} />
           <span className="truncate">{ev.title}</span>
         </div>
-        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          <span className="flex items-center gap-1">
-            <MapPin size={12} /> {ev.room}
-          </span>
-        </div>
-        <div className="mt-1 flex items-center justify-between text-[11px]">
-          <span className="text-zinc-400 dark:text-zinc-500">
-            {durationHours(ev.start, ev.end).toFixed(1).replace(/\.0$/, "")}h
+        <div className="mt-1 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="flex min-w-0 items-center gap-1">
+            <MapPin size={12} className="shrink-0" />
+            <span className="truncate">{ev.room}</span>
           </span>
           <a
             href={googleCalLink(ev)}
             target="_blank"
             rel="noreferrer"
-            className="font-medium text-indigo-500 hover:underline"
+            className="shrink-0 font-medium text-indigo-500 hover:underline"
           >
             + Google
           </a>

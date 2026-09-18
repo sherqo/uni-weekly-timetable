@@ -186,13 +186,6 @@ export const COURSE_COLORS: Record<string, { badge: string; bar: string; soft: s
   },
 };
 
-export function formatTime12h(t24: string): string {
-  const [h, m] = t24.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
 export function durationHours(start: string, end: string): number {
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
