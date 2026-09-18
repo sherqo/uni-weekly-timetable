@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   CalendarDays,
@@ -150,45 +150,174 @@ function EventCard({ ev }: { ev: TimetableEvent }) {
   );
 }
 
-function DayColumn({ day, events, highlight }: { day: DayName; events: TimetableEvent[]; highlight: boolean }) {
+const GRID_START = 7; // 07:00
+const GRID_END = 21; // 21:00
+const HOUR_PX = 56;
+
+// Saturday of the current week (our weeks run Sat–Fri)
+function currentWeekSaturday(): Date {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  d.setDate(d.getDate() - ((d.getDay() + 1) % 7));
+  return d;
+}
+
+function weekRangeLabel(sat: Date): string {
+  const fri = new Date(sat);
+  fri.setDate(fri.getDate() + 6);
+  const fmt = (d: Date) => d.toLocaleString("en-US", { month: "short", day: "numeric" });
+  return `${fmt(sat)} – ${fmt(fri)}, ${sat.getFullYear()}`;
+}
+
+function GridEvent({ ev }: { ev: TimetableEvent }) {
+  const top = ((toMinutes(ev.start) - GRID_START * 60) / 60) * HOUR_PX;
+  const h = ((toMinutes(ev.end) - toMinutes(ev.start)) / 60) * HOUR_PX;
+  const c = COURSE_COLORS[ev.code] ?? COURSE_COLORS.CSE383;
   return (
-    <section
-      className={`rounded-2xl border p-3 ${
-        highlight
-          ? "border-indigo-500/60 bg-indigo-50/50 dark:bg-indigo-500/5"
-          : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
-      }`}
+    <div
+      className={`absolute inset-x-1 overflow-hidden rounded-lg border px-1.5 py-1 ${c.soft}`}
+      style={{ top, height: Math.max(h - 3, 42) }}
+      title={`${ev.code} ${ev.title} (${ev.type}) ${ev.start}–${ev.end} @ ${ev.room}`}
     >
-      <header className="mb-2 flex items-center justify-between px-1">
-        <h3 className="text-sm font-bold">{day}</h3>
-        <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            events.length === 0
-              ? "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500"
-              : "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300"
-          }`}
-        >
-          {events.length === 0 ? "Free" : `${events.length}`}
-        </span>
-      </header>
-      <div className="space-y-2">
-        {events.length === 0 && (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed border-zinc-300 p-3 text-[13px] text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
-            <Coffee size={15} /> No classes
+      <div className="text-[11px] font-semibold tabular-nums leading-tight">
+        {ev.start} – {ev.end}
+      </div>
+      <div className="truncate text-[11px] font-bold leading-tight">{ev.code}</div>
+      <div className="truncate text-[11px] leading-tight opacity-75">{ev.title}</div>
+      {h > 62 && <div className="truncate text-[10px] leading-tight opacity-60">{ev.room}</div>}
+    </div>
+  );
+}
+
+function WeekGrid({ byDay }: { byDay: Map<DayName, TimetableEvent[]> }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sat = useMemo(currentWeekSaturday, []);
+  const todayIdx = (new Date().getDay() + 1) % 7; // 0 = Saturday
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+  const showNowLine = nowMins > GRID_START * 60 && nowMins < GRID_END * 60;
+
+  const gridH = (GRID_END - GRID_START) * HOUR_PX;
+  const hours = Array.from({ length: GRID_END - GRID_START }, (_, i) => GRID_START + i);
+  const yOf = (mins: number) => ((mins - GRID_START * 60) / 60) * HOUR_PX;
+
+  // Scroll to now, else to the first class of the day
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let target: number;
+    if (showNowLine) {
+      target = yOf(nowMins) - 140;
+    } else {
+      let first = Infinity;
+      byDay.forEach((list) => list.forEach((e) => (first = Math.min(first, toMinutes(e.start)))));
+      target = first === Infinity ? 0 : yOf(first) - 60;
+    }
+    el.scrollTop = Math.max(0, target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dateFor = (i: number) => {
+    const d = new Date(sat);
+    d.setDate(d.getDate() + i);
+    return d;
+  };
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between px-4 py-2.5">
+        <h2 className="flex items-center gap-2 text-sm font-bold">
+          <CalendarDays size={16} className="text-indigo-500" />
+          {weekRangeLabel(sat)}
+        </h2>
+        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">scroll to explore ↓</span>
+      </div>
+
+      <div ref={scrollRef} className="nice-scroll max-h-[72vh] overflow-auto border-t border-zinc-200 dark:border-zinc-800">
+        <div className="min-w-[840px]">
+          {/* sticky day header */}
+          <div className="sticky top-0 z-20 grid grid-cols-[52px_repeat(7,minmax(0,1fr))] bg-white dark:bg-zinc-900">
+            <div className="sticky left-0 z-30 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900" />
+            {DAY_ORDER.map((d, i) => {
+              const date = dateFor(i);
+              const isToday = i === todayIdx;
+              return (
+                <div
+                  key={d}
+                  className="border-b border-l border-zinc-200 px-1 py-2 text-center dark:border-zinc-800"
+                >
+                  <div
+                    className={`text-[10px] font-semibold uppercase tracking-wide ${
+                      isToday ? "text-indigo-500" : "text-zinc-400 dark:text-zinc-500"
+                    }`}
+                  >
+                    {d.slice(0, 3)}
+                  </div>
+                  <div
+                    className={`mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm tabular-nums ${
+                      isToday ? "bg-indigo-600 font-bold text-white" : "font-medium"
+                    }`}
+                  >
+                    {date.getDate()}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-        {events.map((ev, i) => (
-          <div key={ev.id}>
-            {i > 0 && (
-              <div className="mb-2 flex items-center gap-2 px-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-                <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-                {formatGap(toMinutes(ev.start) - toMinutes(events[i - 1].end))}
-                <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-              </div>
-            )}
-            <EventCard ev={ev} />
+
+          {/* time grid */}
+          <div className="grid grid-cols-[52px_repeat(7,minmax(0,1fr))]">
+            {/* hour gutter */}
+            <div className="sticky left-0 z-10 bg-white dark:bg-zinc-900" style={{ height: gridH }}>
+              {hours.map((h) => (
+                <div
+                  key={h}
+                  className="absolute right-1.5 -translate-y-1/2 text-[10px] tabular-nums text-zinc-400 dark:text-zinc-500"
+                  style={{ top: (h - GRID_START) * HOUR_PX }}
+                >
+                  {String(h).padStart(2, "0")}:00
+                </div>
+              ))}
+            </div>
+
+            {DAY_ORDER.map((d, i) => {
+              const list = byDay.get(d) ?? [];
+              return (
+                <div
+                  key={d}
+                  className={`relative border-l border-zinc-100 dark:border-zinc-800/70 ${
+                    list.length === 0 ? "bg-zinc-50/70 dark:bg-zinc-950/50" : ""
+                  }`}
+                  style={{ height: gridH }}
+                >
+                  {hours.map((h) => (
+                    <div
+                      key={h}
+                      className="absolute inset-x-0 border-t border-zinc-100 dark:border-zinc-800/60"
+                      style={{ top: (h - GRID_START) * HOUR_PX }}
+                    />
+                  ))}
+                  {list.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-[11px] text-zinc-300 dark:text-zinc-700">Free</span>
+                    </div>
+                  )}
+                  {list.map((ev) => (
+                    <GridEvent key={ev.id} ev={ev} />
+                  ))}
+                  {i === todayIdx && showNowLine && (
+                    <div
+                      className="absolute inset-x-0 z-10 flex items-center"
+                      style={{ top: yOf(nowMins) }}
+                    >
+                      <span className="-ml-1 h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                      <span className="h-0.5 flex-1 bg-red-500" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        ))}
+        </div>
       </div>
     </section>
   );
@@ -259,8 +388,6 @@ export default function App() {
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  const today = todayName();
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
@@ -364,14 +491,8 @@ export default function App() {
           ))}
         </div>
 
-        {/* Week board: stacks on phones, columns on desktop */}
-        {view === "week" && (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-            {DAY_ORDER.map((d) => (
-              <DayColumn key={d} day={d} events={byDay.get(d) ?? []} highlight={today === d} />
-            ))}
-          </div>
-        )}
+        {/* Week time-grid (Google Calendar style) */}
+        {view === "week" && <WeekGrid byDay={byDay} />}
 
         {/* Daily agenda */}
         {view === "day" && (

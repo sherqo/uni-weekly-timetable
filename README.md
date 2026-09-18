@@ -2,7 +2,7 @@
 
 Simple, mobile-friendly university weekly timetable.
 
-- **Week board** (day columns, stacked on phones) + **Daily agenda**
+- **Week board** (Google Calendar-style scrollable time grid, Sat–Fri with real dates) + **Daily agenda**
 - Color-coded courses, break lengths between classes, filters, search
 - Dark-mode toggle, phones open on the daily agenda by default
 - **ICS calendar feed**: `GET /api/ics` — subscribe in Google / Apple / Outlook
